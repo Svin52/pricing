@@ -161,9 +161,23 @@ def build(issues, repo, now):
     return "\n".join(out)
 
 
+def apply_event(issues, event_path):
+    """Список issues в API обновляется с задержкой в несколько секунд, поэтому только что созданная
+    или изменённая задача может в него не попасть. Берём её актуальную версию из самого события."""
+    if not event_path or not os.path.exists(event_path):
+        return issues
+    event = json.load(open(event_path, encoding="utf-8"))
+    issue = event.get("issue")
+    if not issue:
+        return issues
+    rest = [i for i in issues if i["number"] != issue["number"]]
+    return rest if event.get("action") in ("deleted", "transferred") else rest + [issue]
+
+
 def main():
     repo, token = os.environ["REPO"], os.environ["GITHUB_TOKEN"]
     issues = json.load(open(os.environ["ISSUES_JSON"])) if os.environ.get("ISSUES_JSON") else fetch_issues(repo, token)
+    issues = apply_event(issues, os.environ.get("GITHUB_EVENT_PATH"))
     now = datetime.now(TZ)
     block = build(issues, repo, now)
     text = open(README, encoding="utf-8").read()
