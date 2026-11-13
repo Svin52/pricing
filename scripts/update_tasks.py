@@ -32,27 +32,53 @@ def fetch_issues(repo, token):
         page += 1
 
 
+DATE_RE = (r"(?:(?P<y1>\d{4})[-./](?P<m1>\d{1,2})[-./](?P<d1>\d{1,2})"
+           r"|(?P<d2>\d{1,2})[-./](?P<m2>\d{1,2})(?:[-./](?P<y2>\d{4}|\d{2}))?)"
+           r"(?:[ ,T]+(?:в\s*)?(?P<hh>\d{1,2}):(?P<mm>\d{2}))?")
+
+
+def parse_date(s, today=None):
+    """Дата в начале строки: 2026-11-14, 14-11-2026, 14.11.2026, 14/11/26, 14.11 (текущий год), можно со временем.
+    Возвращает ((date, time|None), длина совпадения) или None."""
+    m = re.match(r"\s*" + DATE_RE, s or "")
+    if not m:
+        return None
+    g = m.groupdict()
+    if g["y1"]:
+        y, mo, dd = int(g["y1"]), int(g["m1"]), int(g["d1"])
+    else:
+        dd, mo = int(g["d2"]), int(g["m2"])
+        y = g["y2"]
+        if not y and len(g["m2"]) != 2:  # «1.5 часа» — не дата
+            return None
+        y = (today or date.today()).year if not y else int(y) + (2000 if len(y) == 2 else 0)
+    try:
+        d = date(y, mo, dd)
+        t = time(int(g["hh"]), int(g["mm"])) if g["hh"] else None
+    except ValueError:
+        return None
+    return (d, t), m.end()
+
+
 def parse_deadline(body):
-    """Ищет поле «Дедлайн» из шаблона, либо строку «Дедлайн: ...» в тексте."""
+    """Поле «Дедлайн» из шаблона или строка «Дедлайн: ...» в тексте issue."""
     if not body:
         return None
     m = re.search(r"###\s*Дедлайн\s*\n+([^\n#]*)", body) or re.search(r"Дедлайн\s*:\s*([^\n]*)", body, re.I)
-    if not m:
-        return None
-    s = m.group(1).strip()
-    d = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", s)
-    if d:
-        y, mo, dd = map(int, d.groups())
-    else:
-        d = re.search(r"(\d{1,2})\.(\d{1,2})\.(\d{4})", s)
-        if not d:
-            return None
-        dd, mo, y = map(int, d.groups())
-    t = re.search(r"(\d{1,2}):(\d{2})", s)
-    try:
-        return date(y, mo, dd), (time(int(t.group(1)), int(t.group(2))) if t else None)
-    except ValueError:
-        return None
+    r = parse_date(m.group(1)) if m else None
+    return r[0] if r else None
+
+
+def split_title(title):
+    """«14-11-2026 сделать что-то» -> (дедлайн, «сделать что-то»). Дата должна стоять в начале названия."""
+    r = parse_date(title)
+    if not r:
+        return None, title
+    rest = title[r[1]:]
+    if rest and not re.match(r"[\s:—–\-|.,)]", rest):  # дата должна быть отдельным словом
+        return None, title
+    rest = re.sub(r"^[\s:—–\-|.,)]+", "", rest).strip()
+    return (r[0], rest or title)
 
 
 def plural(n, one, few, many):
@@ -98,7 +124,8 @@ def build(issues, repo, now):
     for i in issues:
         if "pull_request" in i:
             continue
-        dl = parse_deadline(i.get("body"))
+        dl, i["title"] = split_title(i["title"])
+        dl = dl or parse_deadline(i.get("body"))
         if i["state"] == "open":
             active.append((i, dl))
         elif i.get("state_reason") == "completed":
