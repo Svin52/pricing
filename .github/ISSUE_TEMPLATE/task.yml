@@ -13,7 +13,7 @@ body:
     id: assignee
     attributes:
       label: Исполнитель
-      description: "Кто делает задачу. Можно вместо этого выбрать человека справа в Assignees: тогда в трекере будет он. "
+      description: "Кто делает задачу. Можно вместо этого выбрать человека справа в Assignees: тогда в трекере будет он."
       placeholder: "Илья"
     validations:
       required: false
