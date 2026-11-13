@@ -9,6 +9,21 @@ body:
       placeholder: "2026-11-20"
     validations:
       required: false
+  - type: input
+    id: assignee
+    attributes:
+      label: Исполнитель
+      description: "Кто делает задачу. Можно вместо этого выбрать человека справа в Assignees: тогда в трекере будет он."
+      placeholder: "Илья"
+    validations:
+      required: false
+  - type: input
+    id: assigned_by
+    attributes:
+      label: Назначил
+      description: "Кто поставил задачу. Если оставить пустым, будет автор задачи."
+    validations:
+      required: false
   - type: textarea
     id: details
     attributes:
