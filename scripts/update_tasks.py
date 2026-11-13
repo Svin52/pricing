@@ -118,6 +118,28 @@ def esc(s):
     return s.replace("|", "\\|").replace("\n", " ").strip()
 
 
+def form_field(body, name):
+    """Значение поля шаблона «### name» (пустое и _No response_ не считаются)."""
+    m = re.search(r"###\s*" + name + r"\s*\n+([^\n#]*)", body or "")
+    v = m.group(1).strip() if m else ""
+    return "" if v in ("", "_No response_") else v
+
+
+def user_link(u):
+    return f"[{u['login']}](https://github.com/{u['login']})"
+
+
+def assignee(i):
+    """Исполнитель: Assignees у issue, а если их нет — поле «Исполнитель» из шаблона."""
+    people = [user_link(u) for u in i.get("assignees") or []]
+    return ", ".join(people) or esc(form_field(i.get("body"), "Исполнитель")) or "—"
+
+
+def author(i):
+    """Назначил: поле «Назначил» из шаблона, а если оно пустое — автор issue."""
+    return esc(form_field(i.get("body"), "Назначил")) or (user_link(i["user"]) if i.get("user") else "—")
+
+
 def build(issues, repo, now):
     today = now.date()
     active, done = [], []
@@ -138,15 +160,15 @@ def build(issues, repo, now):
            f"**[➕ Новая задача]({new})** · [все задачи](https://github.com/{repo}/issues)", "",
            f"### Активные задачи ({len(active)})", ""]
     if active:
-        out += ["| Задача | Дедлайн | Статус |", "|---|---|---|"]
+        out += ["| Задача | Исполнитель | Назначил | Дедлайн | Статус |", "|---|---|---|---|---|"]
         for i, dl in active:
-            out.append(f"| [{esc(i['title'])}]({i['html_url']}) | "
+            out.append(f"| [{esc(i['title'])}]({i['html_url']}) | {assignee(i)} | {author(i)} | "
                        f"{fmt_date(*dl, today=today) if dl else '—'} | {status(dl, now) if dl else 'без дедлайна'} |")
     else:
         out.append("_Активных задач нет._")
     out += ["", f"### История выполненных ({len(done)})", ""]
     if done:
-        out += ["| Задача | Выполнено | Дедлайн |", "|---|---|---|"]
+        out += ["| Задача | Исполнитель | Назначил | Выполнено | Дедлайн |", "|---|---|---|---|---|"]
         for i, dl in done:
             closed = datetime.fromisoformat(i["closed_at"].replace("Z", "+00:00")).astimezone(TZ)
             if dl:
@@ -154,7 +176,7 @@ def build(issues, repo, now):
                 dl_txt = f"{fmt_date(*dl, today=today)} · {mark}"
             else:
                 dl_txt = "—"
-            out.append(f"| ~~[{esc(i['title'])}]({i['html_url']})~~ | {fmt_date(closed.date(), today=today)} | {dl_txt} |")
+            out.append(f"| ~~[{esc(i['title'])}]({i['html_url']})~~ | {assignee(i)} | {author(i)} | {fmt_date(closed.date(), today=today)} | {dl_txt} |")
     else:
         out.append("_Пока ничего не выполнено._")
     out += ["", END]

@@ -2,7 +2,7 @@ name: Обновить трекер задач в README
 
 on:
   issues:
-    types: [opened, edited, closed, reopened, deleted, transferred]
+    types: [opened, edited, closed, reopened, deleted, transferred, assigned, unassigned]
   schedule:
     - cron: "5 21 * * *"   # каждый день в 00:05 по Москве, чтобы обновлять «просрочено»/«сегодня»
   workflow_dispatch:
