@@ -1,0 +1,19 @@
+name: Задача
+description: Новая задача с дедлайном. Попадёт в трекер в README.
+title: ""
+body:
+  - type: input
+    id: deadline
+    attributes:
+      label: Дедлайн
+      description: "Дата в формате ГГГГ-ММ-ДД или ДД.ММ.ГГГГ, можно добавить время, например 2026-11-20 18:00. Оставьте пустым, если дедлайна нет."
+      placeholder: "2026-11-20"
+    validations:
+      required: false
+  - type: textarea
+    id: details
+    attributes:
+      label: Комментарий
+      description: Необязательно.
+    validations:
+      required: false
