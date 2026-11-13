@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Трекер задач</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7280; --line: #e3e6ea;
+    --accent: #2f6fed; --accent-text: #fff; --danger: #d64545; --warn: #c97a10; --ok: #2e8b57;
+    --overdue-bg: #fdecec; --soon-bg: #fff4e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c; --card: #1d2128; --text: #e6e8eb; --muted: #9aa3ad; --line: #2c323b;
+      --accent: #5b8ff9; --danger: #ef6b6b; --warn: #f0a940; --ok: #5cc28a;
+      --overdue-bg: #3a1f22; --soon-bg: #3a2f1a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 28px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .count { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+  form.add { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+             display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; }
+  form.add .note { grid-column: 1 / -1; }
+  input, textarea, button { font: inherit; color: inherit; }
+  input[type=text], input[type=date], input[type=time], input[type=password], textarea {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+  textarea { resize: vertical; min-height: 38px; }
+  button { cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 12px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button.link { border: none; background: none; padding: 4px 6px; color: var(--muted); }
+  button.link:hover { color: var(--text); }
+  button.link.danger:hover { color: var(--danger); }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  li.task { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+            display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; }
+  li.task.overdue { background: var(--overdue-bg); border-color: var(--danger); }
+  li.task.soon { background: var(--soon-bg); }
+  li.task .title { font-weight: 600; word-break: break-word; }
+  li.task .meta { font-size: 13px; color: var(--muted); }
+  li.task .meta .over { color: var(--danger); font-weight: 600; }
+  li.task .meta .soonTxt { color: var(--warn); font-weight: 600; }
+  li.task .noteTxt { font-size: 13px; white-space: pre-wrap; margin-top: 4px; word-break: break-word; }
+  li.task .actions { display: flex; gap: 2px; }
+  .check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); background: none; padding: 0; margin-top: 1px; }
+  .check:hover { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 20%, transparent); }
+  .history li.task { opacity: .8; }
+  .history li.task .title { text-decoration: line-through; font-weight: 500; }
+  .done-mark { color: var(--ok); font-size: 18px; line-height: 1; margin-top: 2px; }
+  .late { color: var(--danger); }
+  .empty { color: var(--muted); font-size: 14px; padding: 8px 2px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  details.sync { margin-top: 36px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  details.sync summary { cursor: pointer; font-weight: 600; }
+  details.sync .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  details.sync label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  details.sync .full { grid-column: 1 / -1; }
+  details.sync p { font-size: 13px; color: var(--muted); margin: 6px 0; }
+  #syncStatus { font-size: 13px; color: var(--muted); }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg);
+           border-radius: 10px; padding: 10px 14px; display: none; gap: 12px; align-items: center; box-shadow: 0 6px 24px rgba(0,0,0,.2); }
+  .toast button { background: none; border: none; color: var(--accent); font-weight: 600; padding: 0; }
+  @media (max-width: 560px) {
+    form.add { grid-template-columns: 1fr 1fr; }
+    form.add input[type=text] { grid-column: 1 / -1; }
+    form.add button.primary { grid-column: 1 / -1; }
+    details.sync .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Трекер задач</h1>
+  <p class="sub">Проект: стратегия ценообразования на авиабилеты</p>
+
+  <form class="add" id="addForm" autocomplete="off">
+    <input type="text" id="title" placeholder="Новая задача…" required maxlength="300">
+    <input type="date" id="dueDate" title="Дедлайн (дата)">
+    <input type="time" id="dueTime" title="Дедлайн (время, необязательно)">
+    <button class="primary" type="submit">Добавить</button>
+    <textarea class="note" id="note" rows="1" placeholder="Комментарий (необязательно)"></textarea>
+  </form>
+
+  <h2>Активные <span class="count" id="activeCount"></span></h2>
+  <ul id="activeList"></ul>
+
+  <h2>История выполненных <span class="count" id="doneCount"></span></h2>
+  <ul id="doneList" class="history"></ul>
+
+  <details class="sync" id="syncBox">
+    <summary>Синхронизация через GitHub <span id="syncStatus"></span></summary>
+    <p>Без настройки задачи хранятся только в этом браузере. Чтобы видеть их на любом устройстве,
+       укажите репозиторий и токен: задачи будут сохраняться в файл JSON в репозитории.
+       Токен хранится только в этом браузере.</p>
+    <div class="grid">
+      <label>Репозиторий (owner/name)<input type="text" id="ghRepo" placeholder="Svin52/pricing"></label>
+      <label>Ветка<input type="text" id="ghBranch" placeholder="main"></label>
+      <label class="full">Путь к файлу<input type="text" id="ghPath" placeholder="tasks/tasks.json"></label>
+      <label class="full">Токен (fine-grained, доступ Contents: Read and write только к этому репозиторию)
+        <input type="password" id="ghToken" placeholder="github_pat_…"></label>
+    </div>
+    <div class="toolbar">
+      <button type="button" id="ghSave" class="primary">Сохранить и загрузить с GitHub</button>
+      <button type="button" id="ghOff">Отключить</button>
+      <span style="flex:1"></span>
+      <button type="button" id="exportBtn">Экспорт JSON</button>
+      <button type="button" id="importBtn">Импорт JSON</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+  </details>
+</main>
+
+<div class="toast" id="toast"><span id="toastText"></span><button type="button" id="toastUndo">Отменить</button></div>
+
+<script>
+(() => {
+  const LS_TASKS = 'taskTracker.tasks.v1';
+  const LS_GH = 'taskTracker.github.v1';
+  const $ = id => document.getElementById(id);
+
+  // ---------- state ----------
+  let tasks = load();
+  function load() {
+    try { return JSON.parse(localStorage.getItem(LS_TASKS)) || []; } catch { return []; }
+  }
+  function saveLocal() {
+    try { localStorage.setItem(LS_TASKS, JSON.stringify(tasks)); } catch {}
+  }
+  function commit() { saveLocal(); render(); scheduleGhPush(); }
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  // ---------- deadlines ----------
+  function dueMs(t) {
+    if (!t.dueDate) return null;
+    return new Date(t.dueDate + 'T' + (t.dueTime || '23:59')).getTime();
+  }
+  function fmtDue(t) {
+    if (!t.dueDate) return '';
+    const d = new Date(t.dueDate + 'T00:00');
+    let s = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: d.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined });
+    if (t.dueTime) s += ', ' + t.dueTime;
+    return s;
+  }
+  function relDue(t) {
+    const ms = dueMs(t); if (ms == null) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const day = new Date(t.dueDate + 'T00:00').getTime();
+    const days = Math.round((day - today.getTime()) / 86400000);
+    if (ms < Date.now()) return { cls: 'overdue', txt: days === 0 ? 'просрочено сегодня' : 'просрочено на ' + plural(-days, 'день', 'дня', 'дней') };
+    if (days === 0) return { cls: 'soon', txt: 'сегодня' };
+    if (days === 1) return { cls: 'soon', txt: 'завтра' };
+    if (days <= 3) return { cls: 'soon', txt: 'через ' + plural(days, 'день', 'дня', 'дней') };
+    return { cls: '', txt: 'через ' + plural(days, 'день', 'дня', 'дней') };
+  }
+  function plural(n, one, few, many) {
+    const m10 = n % 10, m100 = n % 100;
+    const w = m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+    return n + ' ' + w;
+  }
+  const fmtDateTime = iso => new Date(iso).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+  // ---------- render ----------
+  function el(tag, attrs = {}, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+    }
+    for (const k of kids) if (k != null) e.append(k);
+    return e;
+  }
+  function render() {
+    const active = tasks.filter(t => !t.doneAt).sort((a, b) => (dueMs(a) ?? Infinity) - (dueMs(b) ?? Infinity) || a.createdAt.localeCompare(b.createdAt));
+    const done = tasks.filter(t => t.doneAt).sort((a, b) => b.doneAt.localeCompare(a.doneAt));
+    $('activeCount').textContent = active.length ? '· ' + active.length : '';
+    $('doneCount').textContent = done.length ? '· ' + done.length : '';
+
+    const al = $('activeList'); al.replaceChildren();
+    if (!active.length) al.append(el('li', { class: 'empty' }, 'Активных задач нет.'));
+    for (const t of active) {
+      const r = relDue(t);
+      const meta = el('div', { class: 'meta' });
+      if (t.dueDate) {
+        meta.append('Дедлайн: ' + fmtDue(t) + ' · ');
+        meta.append(el('span', { class: r.cls === 'overdue' ? 'over' : r.cls === 'soon' ? 'soonTxt' : '' }, r.txt));
+      } else meta.append('Без дедлайна');
+      al.append(el('li', { class: 'task ' + (r ? r.cls : '') },
+        el('button', { class: 'check', title: 'Отметить выполненной', 'aria-label': 'Выполнено', onclick: () => markDone(t.id) }),
+        el('div', {}, el('div', { class: 'title' }, t.title), meta, t.note ? el('div', { class: 'noteTxt' }, t.note) : null),
+        el('div', { class: 'actions' },
+          el('button', { class: 'link', title: 'Изменить', onclick: e => edit(t.id, e.currentTarget.closest('li')) }, '✎'),
+          el('button', { class: 'link danger', title: 'Удалить', onclick: () => remove(t.id) }, '✕'))
+      ));
+    }
+
+    const dl = $('doneList'); dl.replaceChildren();
+    if (!done.length) dl.append(el('li', { class: 'empty' }, 'Здесь появятся выполненные задачи.'));
+    for (const t of done) {
+      const ms = dueMs(t);
+      const late = ms != null && new Date(t.doneAt).getTime() > ms;
+      const meta = el('div', { class: 'meta' }, 'Выполнено ' + fmtDateTime(t.doneAt));
+      if (t.dueDate) meta.append(' · дедлайн ' + fmtDue(t), late ? el('span', { class: 'late' }, ' (с опозданием)') : ' (в срок)');
+      dl.append(el('li', { class: 'task' },
+        el('span', { class: 'done-mark' }, '✓'),
+        el('div', {}, el('div', { class: 'title' }, t.title), meta, t.note ? el('div', { class: 'noteTxt' }, t.note) : null),
+        el('div', { class: 'actions' },
+          el('button', { class: 'link', title: 'Вернуть в активные', onclick: () => reopen(t.id) }, '↺'),
+          el('button', { class: 'link danger', title: 'Удалить', onclick: () => remove(t.id) }, '✕'))
+      ));
+    }
+  }
+
+  // ---------- actions ----------
+  $('addForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = $('title').value.trim(); if (!title) return;
+    tasks.push({ id: uid(), title, note: $('note').value.trim(), dueDate: $('dueDate').value || '', dueTime: $('dueDate').value ? $('dueTime').value : '',
+                 createdAt: new Date().toISOString(), doneAt: null });
+    $('addForm').reset(); $('title').focus();
+    commit();
+  });
+  function markDone(id) {
+    const t = tasks.find(x => x.id === id); if (!t) return;
+    t.doneAt = new Date().toISOString(); commit();
+    toast('Задача перенесена в историю', () => { t.doneAt = null; commit(); });
+  }
+  function reopen(id) { const t = tasks.find(x => x.id === id); if (t) { t.doneAt = null; commit(); } }
+  function remove(id) {
+    const i = tasks.findIndex(x => x.id === id); if (i < 0) return;
+    const [t] = tasks.splice(i, 1); commit();
+    toast('Задача удалена', () => { tasks.splice(i, 0, t); commit(); });
+  }
+  function edit(id, row) {
+    const t = tasks.find(x => x.id === id); if (!t) return;
+    const f = el('form', { class: 'add', style: 'margin:0' });
+    const ti = el('input', { type: 'text', value: t.title, required: '' });
+    const dd = el('input', { type: 'date', value: t.dueDate || '' });
+    const tt = el('input', { type: 'time', value: t.dueTime || '' });
+    const nt = el('textarea', { class: 'note', rows: '1' }); nt.value = t.note || '';
+    const btns = el('div', { class: 'toolbar note' }, el('button', { class: 'primary', type: 'submit' }, 'Сохранить'), el('button', { type: 'button', onclick: render }, 'Отмена'));
+    f.append(ti, dd, tt, el('span'), nt, btns);
+    f.addEventListener('submit', e => { e.preventDefault(); const v = ti.value.trim(); if (!v) return;
+      t.title = v; t.dueDate = dd.value; t.dueTime = dd.value ? tt.value : ''; t.note = nt.value.trim(); commit(); });
+    const host = el('li', {}, f);
+    if (row) row.replaceWith(host); else $('activeList').prepend(host);
+    ti.focus();
+  }
+
+  // ---------- toast with undo ----------
+  let toastTimer, undoFn;
+  function toast(text, undo) {
+    $('toastText').textContent = text; undoFn = undo;
+    $('toast').style.display = 'flex';
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').style.display = 'none'; undoFn = null; }, 5000);
+  }
+  $('toastUndo').addEventListener('click', () => { if (undoFn) undoFn(); undoFn = null; $('toast').style.display = 'none'; });
+
+  // ---------- export / import ----------
+  $('exportBtn').addEventListener('click', () => {
+    const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' })), download: 'tasks.json' });
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { const data = JSON.parse(await f.text()); if (!Array.isArray(data)) throw 0; tasks = data; commit(); setStatus('импортировано'); }
+    catch { setStatus('не удалось прочитать файл'); }
+    e.target.value = '';
+  });
+
+  // ---------- GitHub sync ----------
+  let gh = (() => { try { return JSON.parse(localStorage.getItem(LS_GH)) || null; } catch { return null; } })();
+  let ghSha = null, pushTimer = null, pushing = false, pushAgain = false;
+  const setStatus = s => { $('syncStatus').textContent = s ? '· ' + s : ''; };
+  const b64enc = s => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+  const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, '')), c => c.charCodeAt(0)));
+  const apiUrl = () => `https://api.github.com/repos/${gh.repo}/contents/${gh.path.split('/').map(encodeURIComponent).join('/')}`;
+  const headers = () => ({ Authorization: 'Bearer ' + gh.token, Accept: 'application/vnd.github+json' });
+
+  async function ghPull() {
+    setStatus('загрузка…');
+    const r = await fetch(apiUrl() + '?ref=' + encodeURIComponent(gh.branch) + '&t=' + Date.now(), { headers: headers(), cache: 'no-store' });
+    if (r.status === 404) { ghSha = null; setStatus('файла ещё нет, создам при сохранении'); await ghPush(); return; }
+    if (!r.ok) throw new Error('GitHub ответил ' + r.status);
+    const j = await r.json(); ghSha = j.sha;
+    const remote = JSON.parse(b64dec(j.content) || '[]');
+    // merge: union by id, remote wins for tasks present in both, local-only tasks kept
+    const ids = new Set(remote.map(t => t.id));
+    const localOnly = tasks.filter(t => !ids.has(t.id) && !(gh.knownIds || []).includes(t.id));
+    tasks = remote.concat(localOnly);
+    saveLocal(); render();
+    if (localOnly.length) await ghPush();
+    else { gh.knownIds = remote.map(t => t.id); localStorage.setItem(LS_GH, JSON.stringify(gh)); setStatus('синхронизировано'); }
+  }
+  async function ghPush() {
+    if (pushing) { pushAgain = true; return; }
+    pushing = true; setStatus('сохранение…');
+    try {
+      const body = { message: 'Обновление задач', content: b64enc(JSON.stringify(tasks, null, 2) + '\n'), branch: gh.branch };
+      if (ghSha) body.sha = ghSha;
+      const r = await fetch(apiUrl(), { method: 'PUT', headers: headers(), body: JSON.stringify(body) });
+      if ((r.status === 409 || r.status === 422) && ghSha) { ghSha = null; pushing = false; await ghPull(); return; }
+      if (!r.ok) throw new Error('GitHub ответил ' + r.status);
+      ghSha = (await r.json()).content.sha;
+      gh.knownIds = tasks.map(t => t.id); localStorage.setItem(LS_GH, JSON.stringify(gh));
+      setStatus('синхронизировано');
+    } catch (e) { setStatus('ошибка: ' + e.message); }
+    finally { pushing = false; if (pushAgain) { pushAgain = false; ghPush(); } }
+  }
+  function scheduleGhPush() { if (!gh) return; clearTimeout(pushTimer); pushTimer = setTimeout(ghPush, 800); }
+
+  function fillGhForm() {
+    $('ghRepo').value = gh?.repo || 'Svin52/pricing';
+    $('ghBranch').value = gh?.branch || 'main';
+    $('ghPath').value = gh?.path || 'tasks/tasks.json';
+    $('ghToken').value = gh?.token || '';
+  }
+  $('ghSave').addEventListener('click', async () => {
+    const cfg = { repo: $('ghRepo').value.trim(), branch: $('ghBranch').value.trim() || 'main', path: $('ghPath').value.trim().replace(/^\/+/, ''), token: $('ghToken').value.trim(), knownIds: gh?.knownIds || [] };
+    if (!/^[\w.-]+\/[\w.-]+$/.test(cfg.repo) || !cfg.path || !cfg.token) { setStatus('заполните все поля'); return; }
+    gh = cfg; localStorage.setItem(LS_GH, JSON.stringify(gh));
+    try { await ghPull(); } catch (e) { setStatus('ошибка: ' + e.message); }
+  });
+  $('ghOff').addEventListener('click', () => { gh = null; ghSha = null; localStorage.removeItem(LS_GH); fillGhForm(); setStatus('выключено'); });
+
+  fillGhForm();
+  render();
+  setInterval(render, 60000); // keep "сегодня/просрочено" labels fresh
+  if (gh) ghPull().catch(e => setStatus('ошибка: ' + e.message));
+  else setStatus('только этот браузер');
+})();
+</script>
+</body>
+</html>
