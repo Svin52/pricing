@@ -12,9 +12,11 @@
 
 **[➕ Новая задача](https://github.com/Svin52/pricing/issues/new?template=task.yml)** · [все задачи](https://github.com/Svin52/pricing/issues)
 
-### Активные задачи (0)
+### Активные задачи (1)
 
-_Активных задач нет._
+| Задача | Дедлайн | Статус |
+|---|---|---|
+| [14-11-2026 сделать чонибудь там](https://github.com/Svin52/pricing/issues/2) | — | без дедлайна |
 
 ### История выполненных (0)
 
