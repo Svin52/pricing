@@ -1,6 +1,5 @@
 name: Задача
 description: Новая задача с дедлайном. Попадёт в трекер в README.
-title: ""
 body:
   - type: input
     id: deadline
