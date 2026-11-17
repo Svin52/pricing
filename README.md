@@ -16,10 +16,10 @@
 
 | Задача | Исполнитель | Назначил | Дедлайн | Статус |
 |---|---|---|---|---|
-| [Код](https://github.com/Svin52/pricing/issues/8) | Санечка | Илюшка дурак | 19 ноября | 🟡 через 3 дня |
-| [Почитать статьи](https://github.com/Svin52/pricing/issues/9) | [parasomniya](https://github.com/parasomniya) | Илюшка Великан | 19 ноября | 🟡 через 3 дня |
-| [Алгоритмики](https://github.com/Svin52/pricing/issues/10) | Данил | Илюшка Волшебник | 19 ноября | 🟡 через 3 дня |
-| [Строго сформировать модель](https://github.com/Svin52/pricing/issues/11) | Сам себе режисер | Илюшка Свинюшка | 19 ноября | 🟡 через 3 дня |
+| [Код](https://github.com/Svin52/pricing/issues/8) | Санечка | Илюшка дурак | 19 ноября | 🟡 через 2 дня |
+| [Почитать статьи](https://github.com/Svin52/pricing/issues/9) | [parasomniya](https://github.com/parasomniya) | Илюшка Великан | 19 ноября | 🟡 через 2 дня |
+| [Алгоритмики](https://github.com/Svin52/pricing/issues/10) | Данил | Илюшка Волшебник | 19 ноября | 🟡 через 2 дня |
+| [Строго сформировать модель](https://github.com/Svin52/pricing/issues/11) | Сам себе режисер | Илюшка Свинюшка | 19 ноября | 🟡 через 2 дня |
 
 ### История выполненных (1)
 
