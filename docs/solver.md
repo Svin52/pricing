@@ -1,4 +1,4 @@
-# Решатель `airprice`: равновесные цены двух авиакомпаний
+# Решатель `pricing`: равновесные цены двух авиакомпаний
 
 Программа считает, какие цены будут ставить две авиакомпании на одном рейсе, если каждая
 максимизирует свою выручку и учитывает ответ конкурента. Метод — обратная индукция
@@ -8,13 +8,14 @@
 ## Быстрый старт
 
 ```bash
-pip install -r requirements.txt          # numpy, scipy (+ pytest для тестов)
-python -m airprice examples/base.json    # точный спрос
-python -m airprice examples/base_poisson.json --mc 20000   # случайный спрос + проверка Монте-Карло
+pip install -r requirements.txt          # numpy, scipy, matplotlib, pytest
+pip install -e .                         # или задайте PYTHONPATH=src
+python -m pricing experiments/base.json  # точный спрос
+python -m pricing experiments/base_poisson.json --mc 20000   # случайный спрос + проверка Монте-Карло
 python -m pytest -q                      # тесты
 ```
 
-Пример вывода для `examples/base.json` (по 50 мест, 20 периодов, 24 уровня цены от 3000 до 14500):
+Пример вывода для `experiments/base.json` (по 50 мест, 20 периодов, 24 уровня цены от 3000 до 14500):
 
 ```
 Ожидаемая выручка: A = 478 500   B = 446 000
@@ -109,14 +110,14 @@ python -m pytest -q                      # тесты
 * `demand.type = "table"`: `"file": "имя.npz"` с массивами `demand_a (N,24,24)`,
   `demand_b (N,24,24)` и необязательными `mono_a (N,24)`, `mono_b (N,24)`.
   Если `mono_*` не заданы, берётся спрос при цене конкурента на самом высоком уровне —
-  ближайшее к «цене +∞», что есть в таблице. Пример: `examples/make_table_example.py`.
+  ближайшее к «цене +∞», что есть в таблице. Пример: `experiments/make_table_example.py`.
 
 ## Использование из Python
 
 ```python
-from airprice import load_scenario, mnl_scenario, solve, play, format_path, monte_carlo
+from pricing import load_scenario, mnl_scenario, solve, play, format_path, monte_carlo
 
-sc = load_scenario("examples/base.json")
+sc = load_scenario("experiments/base.json")
 sol = solve(sc)
 
 sol.revenue()                       # (выручка A, выручка B)
@@ -163,7 +164,7 @@ M[c, c'] — вероятность, что из c мест останется c
 
 ## Проверка корректности
 
-* **Полный перебор** (`airprice/bruteforce.py`) — отдельная реализация «в лоб»: рекурсия по
+* **Полный перебор** (`src/pricing/bruteforce.py`) — отдельная реализация «в лоб»: рекурсия по
   дереву игры, перебор всех цен и всех исходов продаж. Тесты сверяют с ним все значения и все
   ходы решателя на случайных малых задачах (до 3 мест, 4 цен, 4 периодов) в обоих режимах,
   на произвольных таблицах спроса и на MNL.
@@ -191,21 +192,20 @@ M[c, c'] — вероятность, что из c мест останется c
 | Вопрос | Issue | Записка | В коде |
 |---|---|---|---|
 | Спрос | точный, таблица | Пуассон + MNL | оба режима |
-| Цена в T₀ | самая высокая | самая низкая | параметр, по умолчанию самая высокая |
-
-Их стоит согласовать с А. А. Паниным и поправить один из документов.
+| Цена в T₀ | самая высокая | самая высокая | параметр, по умолчанию самая высокая |
 
 ## Структура
 
 ```
-airprice/
+src/pricing/
   scenario.py    сценарий, проверка входных данных, загрузка JSON
   demand.py      спрос по MNL
   solver.py      обратная индукция
-  simulate.py    траектория цен и Монте-Карло
+  baselines.py   8 базовых эвристик и обёртка dp_policy
+  simulate.py    траектория цен и Монте-Карло (для ДП и эвристик)
   bruteforce.py  полный перебор для проверки
   __main__.py    запуск из командной строки
-examples/        сценарии и пример своих таблиц спроса
+experiments/     сценарии, пример своих таблиц спроса и турнир (tournament.py)
 tests/           тесты (pytest)
 ```
 
