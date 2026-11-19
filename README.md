@@ -20,17 +20,17 @@
 
 **[➕ Новая задача](https://github.com/Svin52/pricing/issues/new?template=task.yml)** · [все задачи](https://github.com/Svin52/pricing/issues)
 
-### Активные задачи (2)
+### Активные задачи (1)
 
 | Задача | Исполнитель | Назначил | Дедлайн | Статус |
 |---|---|---|---|---|
 | [Почитать статьи](https://github.com/Svin52/pricing/issues/9) | [parasomniya](https://github.com/parasomniya) | Илюшка Великан | 19 ноября | 🟠 сегодня |
-| [Строго сформировать модель](https://github.com/Svin52/pricing/issues/11) | Сам себе режисер | Илюшка Свинюшка | 19 ноября | 🟠 сегодня |
 
-### История выполненных (3)
+### История выполненных (4)
 
 | Задача | Исполнитель | Назначил | Выполнено | Дедлайн |
 |---|---|---|---|---|
+| ~~[Строго сформировать модель](https://github.com/Svin52/pricing/issues/11)~~ | Сам себе режисер | Илюшка Свинюшка | 19 ноября | 19 ноября · ✅ в срок |
 | ~~[Код](https://github.com/Svin52/pricing/issues/8)~~ | Санечка | Илюшка дурак | 19 ноября | 19 ноября · ✅ в срок |
 | ~~[Алгоритмики](https://github.com/Svin52/pricing/issues/10)~~ | [difekst](https://github.com/difekst) | Илюшка Волшебник | 19 ноября | 19 ноября · ✅ в срок |
 | ~~[сделать чонибудь](https://github.com/Svin52/pricing/issues/4)~~ | — | [Svin52](https://github.com/Svin52) | 13 ноября | 14 ноября · ✅ в срок |
