@@ -24,7 +24,7 @@
 
 | Задача | Исполнитель | Назначил | Выполнено | Дедлайн |
 |---|---|---|---|---|
-| ~~[Алгоритмики](https://github.com/Svin52/pricing/issues/10)~~ | Данил | Илюшка Волшебник | 19 ноября | 19 ноября · ✅ в срок |
+| ~~[Алгоритмики](https://github.com/Svin52/pricing/issues/10)~~ | [difekst](https://github.com/difekst) | Илюшка Волшебник | 19 ноября | 19 ноября · ✅ в срок |
 | ~~[сделать чонибудь](https://github.com/Svin52/pricing/issues/4)~~ | — | [Svin52](https://github.com/Svin52) | 13 ноября | 14 ноября · ✅ в срок |
 
 <!-- TASKS:END -->
