@@ -1,0 +1,14 @@
+{
+  "name": "Базовый сценарий (случайный спрос)",
+  "prices": {"min": 3000, "max": 14500, "levels": 24},
+  "capacity": {"A": 50, "B": 50},
+  "periods": 20,
+  "start_price": "max",
+  "demand": {
+    "type": "mnl",
+    "mode": "poisson",
+    "arrivals": 8,
+    "alpha": {"A": 4.5, "B": 4.2},
+    "beta": 0.0005
+  }
+}
